@@ -1,7 +1,6 @@
 // 1. Create a function that makes board with arbitrary size, but neither of the 
 // sides exceed 50 squares
 
-
 function createBoard(rows, columns) {
     if (rows > 50 || columns > 50) return 'Error';
     let board = [];
@@ -18,7 +17,7 @@ function createBoard(rows, columns) {
 // Keep the board hidden from other places in the code !
 // Try to not create a long chain of functions which rely on each other !
 
-function BoardController(board) {
+function GameLogicController(board) {
     function showBoard() {
         const triggerEntityStringEvolution = (boardRow) => {
             return boardRow
@@ -109,22 +108,17 @@ function BoardController(board) {
     return {showBoard, markCell};
 }
 
-//The bridge between UI and the game logic
+function GameUiController() {
 
-function BoardUIController(board) {
-    const boardUI = document.querySelector('.board');
-    const redoButton = document.querySelector('button.redo');
-    const newGameButton = document.querySelector('button.new-game');
-    const createNewBoardForm = document.querySelector('form');
-    console.log(board);
+    function renderBoard(boardUI, boardArray) {
+        boardUI.textContent = '';
 
-    function renderBoard(board) {
         boardUI.style.setProperty(
             '--column-number',
-            board[0].length
+            boardArray[0].length
         );
 
-        board.forEach((row, rowIndex) => {
+        boardArray.forEach((row, rowIndex) => {
             row.forEach((column, columnIndex) => {
                 const cellUI = document.createElement('div');
                 cellUI.classList.add('cell');
@@ -136,20 +130,39 @@ function BoardUIController(board) {
         });
     }
 
-    
+    function giveClickedCellPosition(e) {
+        if (e.target.classList.contains('cell')) {
+            return [
+                +e.target.dataset.row, 
+                +e.target.dataset.column
+            ]
+        }
+    }
+
+    return {renderBoard, giveClickedCellPosition}
 }
 
-function GameCentralProcessingUnit() {
-    const boardTest = createBoard(10, 10);
-    const interactions = BoardController(boardTest);
-    interactions.markCell(0, 0);
-    interactions.markCell(0, 1);
-    interactions.markCell(1, 1);
-    interactions.markCell(0, 2);
-    interactions.markCell(2, 2);
-    interactions.showBoard();
 
-    BoardUIController(boardTest);
+function GameCentralProcessingUnit() {
+    const boardUI = document.querySelector('.board');
+    const redoButton = document.querySelector('button.redo');
+    const newGameButton = document.querySelector('button.new-game');
+    const createNewBoardForm = document.querySelector('form');
+
+    const boardArray = createBoard(10, 10);
+    const logicalInteractions = GameLogicController(boardArray);
+    const uiInteractions = GameUiController();
+
+    uiInteractions.renderBoard(boardUI, boardArray);
+
+    boardUI.addEventListener('click', (e) => {
+        if (e.target.classList.contains('cell')) {
+            const clickedCellPosition = 
+                uiInteractions.giveClickedCellPosition(e);
+            logicalInteractions.markCell(...clickedCellPosition);
+            uiInteractions.renderBoard(boardUI, boardArray);
+        }
+    })
 }
 
 GameCentralProcessingUnit()
