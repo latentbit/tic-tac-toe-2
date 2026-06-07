@@ -74,6 +74,54 @@ h1 {
     }
 }
 
+dialog {
+    margin: auto;
+    border-radius: 10px;
+    border: none;
+}
+
+dialog::backdrop {
+    backdrop-filter: blur(2px);
+}
+
+dialog form {
+    border-radius: 10px;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+form {
+    p {
+        display: flex;
+        flex-direction: column;
+        margin: 18px 0;
+        gap: 5px;
+        font-size: 0.8rem;
+    }
+
+    button {
+        width: 100%;
+        background-color: var(--primary-pink);
+        color: white;
+        font-weight: 800;
+        padding: 5px 0;
+        border: none;
+        border-radius: 5px;
+    }
+
+    input:user-invalid {
+        border: 1px solid red;
+    }
+
+    input {
+        height: 1.1rem;
+    }
+
+    button:hover {
+        box-shadow: 0 0 200px rgba(0, 0, 0, 0.227) inset;
+    }
+}
+
 .game-display > .board {
     background-color: var(--primary-orange);
     width: max(50px, 75%);
@@ -82,9 +130,7 @@ h1 {
     overflow: auto;
     display: grid;
     align-content: start;
-
     /* JavaScript can access this variable*/
-
     --column-number: 20;
     grid-template-columns: repeat(var(--column-number), 1fr);
 }

@@ -12,10 +12,52 @@
     <div class="main">
         <div class="buttons-container">
             <button class="redo">Redo</button>
-            <button class="new-game">New game</button>
+            <button 
+                class="new-game"
+                command="show-modal"
+                commandfor="new-game-dialog"
+            >
+                New game
+            </button>
         </div>
+        <dialog
+            id="new-game-dialog"
+            closedby="any"
+        >
+            <form action="">
+                <h2>Create board</h2>
+                <p>
+                    <label for="rowNumber">
+                        Number of rows: 
+                    </label>
+                    <input 
+                        autofocus 
+                        type="number" 
+                        name="rowNumber" 
+                        id="rowNumber"
+                        min="1"
+                        max="50"
+                        required
+                    >
+                </p>
+                <p>
+                    <label for="columnNumber">
+                        Number of columns: 
+                    </label>
+                    <input 
+                        type="number" 
+                        name="columnNumber" 
+                        id="columnNumber"
+                        min="1"
+                        max="50"
+                        required
+                    >
+                </p>
+                <button type="submit">Create</button>
+            </form>
+        </dialog>
         <div class="game-display">
-            <div class="board">
+            <div class="board" closedby="any">
             </div>
         </div>
     </div>
