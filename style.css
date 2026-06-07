@@ -135,7 +135,7 @@ form {
     /* JavaScript can access this variable*/
 
     --column-number: 20;
-    grid-template-columns: repeat(var(--column-number), minmax(30px, 300px));
+    grid-template-columns: repeat(var(--column-number), minmax(30px, 1fr));
 }
 
 .board .cell {
