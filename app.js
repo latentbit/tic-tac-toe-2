@@ -18,7 +18,7 @@ function createBoard(rows, columns) {
 // Keep the board hidden from other places in the code !
 // Try to not create a long chain of functions which rely on each other !
 
-function createBoardController(board) {
+function BoardController(board) {
     function showBoard() {
         const triggerEntityStringEvolution = (boardRow) => {
             return boardRow
@@ -109,11 +109,47 @@ function createBoardController(board) {
     return {showBoard, markCell};
 }
 
+//The bridge between UI and the game logic
 
-let interactions = createBoardController(createBoard(10, 10));
-interactions.markCell(0, 0);
-interactions.markCell(0, 1);
-interactions.markCell(1, 1);
-interactions.markCell(0, 2);
-interactions.markCell(2, 2);
-interactions.showBoard();
+function BoardUIController(board) {
+    const boardUI = document.querySelector('.board');
+    const redoButton = document.querySelector('button.redo');
+    const newGameButton = document.querySelector('button.new-game');
+    const createNewBoardForm = document.querySelector('form');
+    console.log(board);
+
+    function renderBoard(board) {
+        boardUI.style.setProperty(
+            '--column-number',
+            board[0].length
+        );
+
+        board.forEach((row, rowIndex) => {
+            row.forEach((column, columnIndex) => {
+                const cellUI = document.createElement('div');
+                cellUI.classList.add('cell');
+                cellUI.textContent = column
+                cellUI.dataset.row = rowIndex;
+                cellUI.dataset.column = columnIndex;
+                boardUI.appendChild(cellUI);
+            })
+        });
+    }
+
+    
+}
+
+function GameCentralProcessingUnit() {
+    const boardTest = createBoard(10, 10);
+    const interactions = BoardController(boardTest);
+    interactions.markCell(0, 0);
+    interactions.markCell(0, 1);
+    interactions.markCell(1, 1);
+    interactions.markCell(0, 2);
+    interactions.markCell(2, 2);
+    interactions.showBoard();
+
+    BoardUIController(boardTest);
+}
+
+GameCentralProcessingUnit()
