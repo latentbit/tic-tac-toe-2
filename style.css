@@ -124,7 +124,7 @@ form {
 
 .game-display > .board {
     background-color: var(--primary-pink);
-    width: min(800px, 60%);
+    width: min(50vw, 600px);
     height: clamp(40px, auto, 500px);
     gap: 1px;
     overflow: auto;
@@ -133,9 +133,9 @@ form {
     border: 5px solid var(--primary-pink);
 
     /* JavaScript can access this variable*/
-    
+
     --column-number: 20;
-    grid-template-columns: repeat(var(--column-number), minmax(40px, 300px));
+    grid-template-columns: repeat(var(--column-number), minmax(30px, 300px));
 }
 
 .board .cell {
