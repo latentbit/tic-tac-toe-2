@@ -2,7 +2,14 @@
 // sides exceed 50 squares
 
 function createBoard(rows, columns) {
-    if (rows > 50 || columns > 50) return 'Error';
+    if (
+        rows > 50 || columns > 50 || 
+        rows < 1 || columns < 1
+    ) {
+        alert('Board input number exceed the desired range');
+        return;
+    }
+
     let board = [];
     for (let i = 0 ; i < rows ; i++) {
         board.push([]);
@@ -28,17 +35,22 @@ function GameLogicController(board) {
             .map(row => triggerEntityStringEvolution(row))
             .join('\n');
 
-        return boardString;
+        console.log(boardString);
     }
 
 
     let currentPlayer = 'X';
-    function markCell(rowIndex, colIndex) {
+    let gameOver = false;
+    function markCell(rowIndex, colIndex, winConditionNumber = 3) {
+        if (gameOver) {
+            alert('Game already over! Create a new game !');
+            return;
+        }
+
         if (
             board[rowIndex] === undefined ||
             board[rowIndex][colIndex] === undefined ||
-            board[rowIndex][colIndex] !== '' ||
-            gameOver
+            board[rowIndex][colIndex] !== ''
         ) {
             alert('Warning: You have interacted with a forbidden board cell... the system will remember this...');
             return;
@@ -46,13 +58,12 @@ function GameLogicController(board) {
 
         board[rowIndex][colIndex] = currentPlayer;
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+
+        checkWinStatus(rowIndex, colIndex, winConditionNumber);
     }
 
 
-    let gameOver = false;
-    function checkWinStatus(rowIndex, colIndex, winConditionNumber = 3) {
-        if (gameOver) return false;
-
+    function checkWinStatus(rowIndex, colIndex, winConditionNumber) {
         const algorithms = [
             [0, 1],  // left -> right
             [1, 0],  // bottom -> top
@@ -96,18 +107,15 @@ function GameLogicController(board) {
 
             if (sequenceCount >= winConditionNumber) {
                 gameOver = true;
-                return true;
+                console.log('you won')
             }
         }
-
-        return false;
     }
 
-    return {showBoard, markCell, checkWinStatus};
+    return {showBoard, markCell};
 }
 
 function GameUIController() {
-
     function renderBoardUI(boardUI, boardArray) {
         boardUI.textContent = '';
 
@@ -137,30 +145,55 @@ function GameUIController() {
         }
     }
 
-    return {renderBoardUI, giveClickedCellPosition}
+    function updateCellUI(e, clickedCellPosition, boardArray) {
+        e.target.textContent = 
+            boardArray[+e.target.dataset.row][+e.target.dataset.column];
+    }
+
+    return {renderBoardUI, giveClickedCellPosition, updateCellUI}
 }
 
 
-function GameCentralProcessingUnit() {
+function GameCentralProcessingUnit() { // factory function?
     const boardUI = document.querySelector('.board');
     const redoButton = document.querySelector('button.redo');
-    const newGameButton = document.querySelector('button.new-game');
-    const createNewBoardForm = document.querySelector('form');
+    const form = document.querySelector('form');
 
-    const boardArray = createBoard(10, 10);
-    const logicalInteractions = GameLogicController(boardArray);
-    const uiInteractions = GameUIController();
+    let boardArray;
+    let logicalInteractions; // Object for manipulating underlying game logic
+    const UIInteractions = GameUIController(); // Object for handling UI interactions
 
-    uiInteractions.renderBoardUI(boardUI, boardArray);
+    form.addEventListener( 'submit', submitEventHandler);
+    boardUI.addEventListener('click', cellClickHandler);
 
-    boardUI.addEventListener('click', (e) => {
-        if (e.target.classList.contains('cell')) {
-            const clickedCellPosition = 
-                uiInteractions.giveClickedCellPosition(e);
-            logicalInteractions.markCell(...clickedCellPosition);
-            uiInteractions.renderBoardUI(boardUI, boardArray);
+    let winConditionNumber;
+    function submitEventHandler(e) {
+        event.preventDefault();
+        const customRow = Number(form.querySelectorAll('input')[0].value);
+        const customColumn = Number(form.querySelectorAll('input')[1].value);
+        winConditionNumber = Number(form.querySelectorAll('input')[2].value);
+
+        if (
+            winConditionNumber > customRow &&
+            winConditionNumber > customColumn
+        ) {
+            console.log(customRow, customColumn, winConditionNumber)
+            alert('Win condition number is too high');
+            return;
         }
-    })
+
+        boardArray = createBoard(customRow, customColumn);
+        logicalInteractions = GameLogicController(boardArray);
+        UIInteractions.renderBoardUI(boardUI, boardArray);
+    }
+
+    function cellClickHandler(e) {
+        if (e.target.classList.contains('cell')) {
+            const clickedCellPosition = UIInteractions.giveClickedCellPosition(e);
+            logicalInteractions.markCell(clickedCellPosition[0], clickedCellPosition[1], winConditionNumber);
+            UIInteractions.updateCellUI(e, clickedCellPosition, boardArray);
+        }
+    }
 }
 
-GameCentralProcessingUnit()
+game = GameCentralProcessingUnit();
