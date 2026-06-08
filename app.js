@@ -14,8 +14,7 @@ function createBoard(rows, columns) {
 }
 
 // 2. Create a factory function that provides ways to interact with the board.
-// Keep the board hidden from other places in the code !
-// Try to not create a long chain of functions which rely on each other !
+// This function is the only place which can access the board.
 
 function GameLogicController(board) {
     function showBoard() {
@@ -29,15 +28,24 @@ function GameLogicController(board) {
             .map(row => triggerEntityStringEvolution(row))
             .join('\n');
 
-        console.log(boardString);
+        return boardString;
     }
 
 
-    let currentPlayer = 'X'; //Note for my terrible vertical eye scanning system: this variable is used below
-    function markCell(rowIndex, colIndex, winConditionNumber = 3) {
-        if (board[rowIndex][colIndex] !== '') {
-            console.error('Warning: You have interacted with a forbidden board cell... the system will remember this...');
-            return false;
+    let currentPlayer = 'X';
+    function markCell(rowIndex, colIndex, winConditionNumber) {
+        if (winnerDecided) {
+            alert("Winner already decided!");
+            return;
+        }
+        
+        if (
+            board[rowIndex] === undefined ||
+            board[rowIndex][colIndex] === undefined ||
+            board[rowIndex][colIndex] !== ''
+        ) {
+            alert('Warning: You have interacted with a forbidden board cell... the system will remember this...');
+            return;
         };
 
         board[rowIndex][colIndex] = currentPlayer;
@@ -46,15 +54,10 @@ function GameLogicController(board) {
         checkWinStatus(rowIndex, colIndex, winConditionNumber);
     }
 
-    // How do you check every possible winning position based on the player's last move?
 
+    let winnerDecided = false;
     function checkWinStatus(rowIndex, colIndex, winConditionNumber = 3) {
-        if (board[rowIndex] === undefined ||
-            board[rowIndex][colIndex] === undefined
-        ) {
-            console.error('The user\'s last move does not exist on the board.');
-            return false;
-        }
+        if (winnerDecided) return;
 
         (function checkDirection() {
             const algorithms = [
@@ -64,23 +67,24 @@ function GameLogicController(board) {
                 [-1, -1], //bottom right -> top left
             ];
 
-            const checkPositionValidity = (positionArray) => {
-                return board[positionArray[0]] !== undefined &&
-                        board[positionArray[0]][positionArray[1]] !== undefined
+            const checkPositionValidity = (position) => {
+                return board[position[0]] !== undefined &&
+                        board[position[0]][position[1]] !== undefined
             }
 
             // For each direction check, follow this pattern:
             // start at last move -> walk repeatedly -> count matches -> stop when broken
 
+
             for (const direction of algorithms) {
                 let sequenceCount = 1;
-                const lastMove = board[rowIndex][colIndex]; //outputs X or O
+                const lastMoveToken = board[rowIndex][colIndex];
                 let forwardPosition = [rowIndex + direction[0], colIndex + direction[1]];
                 let backwardPosition = [rowIndex - direction[0], colIndex - direction[1]];
 
                 while (
                     checkPositionValidity(forwardPosition) &&
-                    board[forwardPosition[0]][forwardPosition[1]] === lastMove && 
+                    board[forwardPosition[0]][forwardPosition[1]] === lastMoveToken && 
                     sequenceCount < winConditionNumber
                 ) {
                     ++sequenceCount;
@@ -90,7 +94,7 @@ function GameLogicController(board) {
 
                 while (
                     checkPositionValidity(backwardPosition) &&
-                    board[backwardPosition[0]][backwardPosition[1]] === lastMove &&
+                    board[backwardPosition[0]][backwardPosition[1]] === lastMoveToken &&
                     sequenceCount < winConditionNumber
                 ) {
                     ++sequenceCount;
@@ -99,7 +103,8 @@ function GameLogicController(board) {
                 }
 
                 if (sequenceCount >= winConditionNumber) {
-                    console.log("you wonnn")
+                    console.log(`Winning move for ${lastMoveToken}: board[${rowIndex}][${colIndex}]`);
+                    winnerDecided = true;
                 }
             }
         })()
