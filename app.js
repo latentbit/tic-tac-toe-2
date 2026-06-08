@@ -33,16 +33,12 @@ function GameLogicController(board) {
 
 
     let currentPlayer = 'X';
-    function markCell(rowIndex, colIndex, winConditionNumber) {
-        if (winnerDecided) {
-            alert("Winner already decided!");
-            return;
-        }
-        
+    function markCell(rowIndex, colIndex) {
         if (
             board[rowIndex] === undefined ||
             board[rowIndex][colIndex] === undefined ||
-            board[rowIndex][colIndex] !== ''
+            board[rowIndex][colIndex] !== '' ||
+            gameOver
         ) {
             alert('Warning: You have interacted with a forbidden board cell... the system will remember this...');
             return;
@@ -50,72 +46,69 @@ function GameLogicController(board) {
 
         board[rowIndex][colIndex] = currentPlayer;
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
-
-        checkWinStatus(rowIndex, colIndex, winConditionNumber);
     }
 
 
-    let winnerDecided = false;
+    let gameOver = false;
     function checkWinStatus(rowIndex, colIndex, winConditionNumber = 3) {
-        if (winnerDecided) return;
+        if (gameOver) return false;
 
-        (function checkDirection() {
-            const algorithms = [
-                [0, 1],  // left -> right
-                [1, 0],  // bottom -> top
-                [-1, 1], // bottom left -> top right
-                [-1, -1], //bottom right -> top left
-            ];
+        const algorithms = [
+            [0, 1],  // left -> right
+            [1, 0],  // bottom -> top
+            [-1, 1], // bottom left -> top right
+            [-1, -1], //bottom right -> top left
+        ];
 
-            const checkPositionValidity = (position) => {
-                return board[position[0]] !== undefined &&
-                        board[position[0]][position[1]] !== undefined
+        const checkPositionValidity = (position) => {
+            return board[position[0]] !== undefined &&
+                    board[position[0]][position[1]] !== undefined
+        }
+
+        // For each direction check, follow this pattern:
+        // start at last move -> walk repeatedly -> count matches -> stop when broken
+
+        for (const direction of algorithms) {
+            let sequenceCount = 1;
+            const lastMoveToken = board[rowIndex][colIndex];
+            let forwardPosition = [rowIndex + direction[0], colIndex + direction[1]];
+            let backwardPosition = [rowIndex - direction[0], colIndex - direction[1]];
+
+            while (
+                checkPositionValidity(forwardPosition) &&
+                board[forwardPosition[0]][forwardPosition[1]] === lastMoveToken && 
+                sequenceCount < winConditionNumber
+            ) {
+                ++sequenceCount;
+                forwardPosition[0] += direction[0];
+                forwardPosition[1] += direction[1];
             }
 
-            // For each direction check, follow this pattern:
-            // start at last move -> walk repeatedly -> count matches -> stop when broken
-
-
-            for (const direction of algorithms) {
-                let sequenceCount = 1;
-                const lastMoveToken = board[rowIndex][colIndex];
-                let forwardPosition = [rowIndex + direction[0], colIndex + direction[1]];
-                let backwardPosition = [rowIndex - direction[0], colIndex - direction[1]];
-
-                while (
-                    checkPositionValidity(forwardPosition) &&
-                    board[forwardPosition[0]][forwardPosition[1]] === lastMoveToken && 
-                    sequenceCount < winConditionNumber
-                ) {
-                    ++sequenceCount;
-                    forwardPosition[0] += direction[0];
-                    forwardPosition[1] += direction[1];
-                }
-
-                while (
-                    checkPositionValidity(backwardPosition) &&
-                    board[backwardPosition[0]][backwardPosition[1]] === lastMoveToken &&
-                    sequenceCount < winConditionNumber
-                ) {
-                    ++sequenceCount;
-                    backwardPosition[0] -= direction[0];
-                    backwardPosition[1] -= direction[1];
-                }
-
-                if (sequenceCount >= winConditionNumber) {
-                    console.log(`Winning move for ${lastMoveToken}: board[${rowIndex}][${colIndex}]`);
-                    winnerDecided = true;
-                }
+            while (
+                checkPositionValidity(backwardPosition) &&
+                board[backwardPosition[0]][backwardPosition[1]] === lastMoveToken &&
+                sequenceCount < winConditionNumber
+            ) {
+                ++sequenceCount;
+                backwardPosition[0] -= direction[0];
+                backwardPosition[1] -= direction[1];
             }
-        })()
+
+            if (sequenceCount >= winConditionNumber) {
+                gameOver = true;
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    return {showBoard, markCell};
+    return {showBoard, markCell, checkWinStatus};
 }
 
-function GameUiController() {
+function GameUIController() {
 
-    function renderBoard(boardUI, boardArray) {
+    function renderBoardUI(boardUI, boardArray) {
         boardUI.textContent = '';
 
         boardUI.style.setProperty(
@@ -144,7 +137,7 @@ function GameUiController() {
         }
     }
 
-    return {renderBoard, giveClickedCellPosition}
+    return {renderBoardUI, giveClickedCellPosition}
 }
 
 
@@ -156,16 +149,16 @@ function GameCentralProcessingUnit() {
 
     const boardArray = createBoard(10, 10);
     const logicalInteractions = GameLogicController(boardArray);
-    const uiInteractions = GameUiController();
+    const uiInteractions = GameUIController();
 
-    uiInteractions.renderBoard(boardUI, boardArray);
+    uiInteractions.renderBoardUI(boardUI, boardArray);
 
     boardUI.addEventListener('click', (e) => {
         if (e.target.classList.contains('cell')) {
             const clickedCellPosition = 
                 uiInteractions.giveClickedCellPosition(e);
             logicalInteractions.markCell(...clickedCellPosition);
-            uiInteractions.renderBoard(boardUI, boardArray);
+            uiInteractions.renderBoardUI(boardUI, boardArray);
         }
     })
 }
