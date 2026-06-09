@@ -41,6 +41,8 @@ function GameLogicController(board) {
 
     let currentPlayer = 'X';
     let gameOver = false;
+    let lastMove = [];
+
     function markCell(rowIndex, colIndex, winConditionNumber = 3) {
         if (gameOver) {
             alert('Game already over! Create a new game !');
@@ -59,7 +61,14 @@ function GameLogicController(board) {
         board[rowIndex][colIndex] = currentPlayer;
         currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
 
+        lastMove.push([rowIndex, colIndex]);
         checkWinStatus(rowIndex, colIndex, winConditionNumber);
+    }
+
+    function undo() {
+        if (lastMove.length === 0) return;
+        board[lastMove.at(-1)[0]][lastMove.at(-1)[1]] = '';
+        lastMove.pop();
     }
 
 
@@ -107,6 +116,7 @@ function GameLogicController(board) {
 
             if (sequenceCount >= winConditionNumber) {
                 gameOver = true;
+                lastMove = [];
                 alert('you won');
             }
         }
@@ -126,7 +136,7 @@ function GameLogicController(board) {
         )
     }
 
-    return {showBoard, markCell};
+    return {showBoard, markCell, undo};
 }
 
 function GameUIController() {
@@ -159,7 +169,7 @@ function GameUIController() {
         }
     }
 
-    function updateCellUI(e, clickedCellPosition, boardArray) {
+    function updateCellUI(e, boardArray ) {
         e.target.textContent = 
             boardArray[+e.target.dataset.row][+e.target.dataset.column];
     }
@@ -170,15 +180,21 @@ function GameUIController() {
 
 function GameCentralProcessingUnit() { // factory function?
     const boardUI = document.querySelector('.board');
-    const redoButton = document.querySelector('button.redo');
+    const undoButton = document.querySelector('button.redo');
     const form = document.querySelector('form');
 
-    let boardArray;
-    let logicalInteractions; // Object for manipulating underlying game logic
+    let boardArray = createBoard(4, 4);
+    let logicalInteractions = GameLogicController(boardArray); // Object for manipulating underlying game logic
     const UIInteractions = GameUIController(); // Object for handling UI interactions
 
     form.addEventListener( 'submit', submitEventHandler);
     boardUI.addEventListener('click', cellClickHandler);
+    undoButton.addEventListener('click', undo)
+
+    function undo() {
+        logicalInteractions.undo();
+        UIInteractions.renderBoardUI(boardUI, boardArray);
+    }
 
     let winConditionNumber;
     function submitEventHandler(e) {
@@ -204,7 +220,7 @@ function GameCentralProcessingUnit() { // factory function?
         if (e.target.classList.contains('cell')) {
             const clickedCellPosition = UIInteractions.giveClickedCellPosition(e);
             logicalInteractions.markCell(clickedCellPosition[0], clickedCellPosition[1], winConditionNumber);
-            UIInteractions.updateCellUI(e, clickedCellPosition, boardArray);
+            UIInteractions.updateCellUI(e, boardArray);
         }
     }
 }
