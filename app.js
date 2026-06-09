@@ -107,9 +107,23 @@ function GameLogicController(board) {
 
             if (sequenceCount >= winConditionNumber) {
                 gameOver = true;
-                console.log('you won')
+                alert('you won');
             }
         }
+
+        if (checkTie()) {
+            alert('Tie! restart the game!');
+        }
+    }
+
+
+
+    function checkTie() {
+        let movesCount = 0;
+        const totalCell = board.length * board[0].length;
+        return board.every(row => 
+            row.every(cell => cell !== '')
+        )
     }
 
     return {showBoard, markCell};
@@ -177,7 +191,6 @@ function GameCentralProcessingUnit() { // factory function?
             winConditionNumber > customRow &&
             winConditionNumber > customColumn
         ) {
-            console.log(customRow, customColumn, winConditionNumber)
             alert('Win condition number is too high');
             return;
         }
